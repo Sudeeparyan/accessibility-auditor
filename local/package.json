@@ -1,0 +1,26 @@
+{
+  "name": "accessibility-auditor-local",
+  "version": "1.0.0",
+  "description": "Local development server for the AccessibilityAI Auditor — Express API + React Dashboard",
+  "main": "src/api/server.js",
+  "scripts": {
+    "start": "node src/api/server.js",
+    "dev": "nodemon src/api/server.js",
+    "test": "node test/manual-test.js",
+    "dashboard": "cd dashboard && npm run dev",
+    "install:all": "npm install && cd dashboard && npm install"
+  },
+  "author": "Sudeep Aryan Gaddameedi",
+  "license": "MIT",
+  "dependencies": {
+    "axe-core": "^4.8.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "openai": "^4.24.1",
+    "puppeteer": "^21.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

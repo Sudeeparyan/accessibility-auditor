@@ -1,0 +1,38 @@
+{
+  "name": "accessibility-auditor-aws",
+  "version": "1.0.0",
+  "description": "Serverless AWS backend for WCAG 2.1 accessibility auditing — Lambda, API Gateway, SQS, DynamoDB",
+  "scripts": {
+    "build": "tsc --noEmit && echo 'TypeScript compilation successful'",
+    "typecheck": "tsc --noEmit",
+    "deploy": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "remove": "serverless remove --stage dev",
+    "offline": "IS_OFFLINE=true serverless offline",
+    "logs:api": "serverless logs -f api --stage dev -t",
+    "logs:consumer": "serverless logs -f auditConsumer --stage dev -t"
+  },
+  "author": "Sudeep Aryan Gaddameedi",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.990.0",
+    "@aws-sdk/client-sqs": "^3.990.0",
+    "@aws-sdk/lib-dynamodb": "^3.990.0",
+    "@sparticuz/chromium": "^119.0.2",
+    "axe-core": "^4.8.3",
+    "openai": "^4.24.1",
+    "puppeteer-core": "^21.6.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.160",
+    "@types/node": "^20.19.33",
+    "serverless": "^3.40.0",
+    "serverless-offline": "^13.9.0",
+    "serverless-webpack": "^5.15.3",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "webpack": "^5.105.2",
+    "webpack-node-externals": "^3.0.0"
+  }
+}

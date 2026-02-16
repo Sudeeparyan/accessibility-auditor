@@ -1,2 +1,32 @@
+# Dependencies
 node_modules
+
+# Environment variables (contains secrets)
 .env
+.env.local
+.env.*.local
+
+# Build outputs
+dist
+.build
+.vite
+.webpack
+
+# Test artifacts
+test-report.json
+
+# AWS credentials — NEVER commit these
+aws/rootkey.csv
+rootkey.csv
+**/rootkey*.csv
+
+# Serverless Framework artifacts (may contain embedded secrets)
+.serverless
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db

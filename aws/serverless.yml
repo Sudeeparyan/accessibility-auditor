@@ -1,0 +1,227 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# serverless.yml — Serverless Framework v3 configuration
+#
+# Deploys the AccessibilityAI Auditor as a fully serverless application on AWS:
+#   - API Gateway (REST API with CORS)
+#   - Lambda functions (API handler + SQS consumer)
+#   - SQS queues (audit jobs + dead-letter queue)
+#   - DynamoDB table (audit results storage)
+#   - IAM roles (least-privilege access)
+#
+# Usage:
+#   npx serverless deploy --stage dev
+#   npx serverless deploy --stage prod
+#   npx serverless remove --stage dev
+# ─────────────────────────────────────────────────────────────────────────────
+
+service: accessibility-auditor
+frameworkVersion: '3'
+
+# ─── Provider Configuration ──────────────────────────────────────────────────
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  memorySize: 1024
+  timeout: 30
+  architecture: x86_64  # Required for Puppeteer/Chromium compatibility
+
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${self:provider.stage}
+    SQS_QUEUE_URL: !Ref AuditJobQueue
+    SQS_DLQ_URL: !Ref AuditJobDLQ
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    STAGE: ${self:provider.stage}
+    IS_OFFLINE: 'false'
+
+  # IAM permissions (least-privilege)
+  iam:
+    role:
+      statements:
+        # DynamoDB access
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:DeleteItem
+            - dynamodb:UpdateItem
+          Resource:
+            - !GetAtt AuditResultsTable.Arn
+            - !Sub '${AuditResultsTable.Arn}/index/*'
+        # SQS access
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource:
+            - !GetAtt AuditJobQueue.Arn
+            - !GetAtt AuditJobDLQ.Arn
+
+  # API Gateway CORS configuration
+  httpApi:
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowedMethods:
+        - GET
+        - POST
+        - OPTIONS
+
+# ─── Custom Configuration ────────────────────────────────────────────────────
+
+custom:
+  # Serverless Webpack for TypeScript bundling
+  webpack:
+    webpackConfig: webpack.config.js
+    includeModules:
+      forceExclude:
+        - puppeteer           # Not used in Lambda (too large)
+      forceInclude:
+        - axe-core
+        - openai
+        - puppeteer-core      # Required (small, no Chromium binary)
+        - '@sparticuz/chromium' # Lambda-compatible Chromium binary
+    packager: npm
+
+  # DynamoDB table name per stage
+  tableName: ${self:service}-${self:provider.stage}
+
+# ─── Plugins ─────────────────────────────────────────────────────────────────
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+
+# ─── Lambda Functions ────────────────────────────────────────────────────────
+
+functions:
+  # API Handler — serves all HTTP endpoints via API Gateway
+  api:
+    handler: src/handlers/api-handler.handler
+    timeout: 30
+    memorySize: 512
+    description: 'API Gateway handler for accessibility audit endpoints'
+    events:
+      - httpApi:
+          method: GET
+          path: /health
+      - httpApi:
+          method: GET
+          path: /api/info
+      - httpApi:
+          method: POST
+          path: /api/audit
+      - httpApi:
+          method: POST
+          path: /api/audit/batch
+      - httpApi:
+          method: GET
+          path: /api/audit/history
+      - httpApi:
+          method: GET
+          path: '/api/audit/{id}'
+      - httpApi:
+          method: GET
+          path: /api/queue/stats
+
+  # Audit Consumer — processes SQS audit job messages
+  auditConsumer:
+    handler: src/handlers/audit-consumer.handler
+    timeout: 300           # 5-minute timeout for Puppeteer scraping
+    memorySize: 2048       # Puppeteer needs more memory
+    description: 'SQS consumer that runs accessibility audits'
+    events:
+      - sqs:
+          arn: !GetAtt AuditJobQueue.Arn
+          batchSize: 1           # Process one audit at a time
+          maximumBatchingWindow: 0
+          functionResponseType: ReportBatchItemFailures
+
+# ─── AWS Resources ───────────────────────────────────────────────────────────
+
+resources:
+  Resources:
+    # ── DynamoDB Table ─────────────────────────────────────────────────
+    AuditResultsTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Delete  # Use Retain for production
+      Properties:
+        TableName: ${self:custom.tableName}
+        BillingMode: PAY_PER_REQUEST  # On-demand (scales to zero cost)
+        AttributeDefinitions:
+          - AttributeName: auditId
+            AttributeType: S
+          - AttributeName: url
+            AttributeType: S
+          - AttributeName: scannedAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: auditId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: url-index
+            KeySchema:
+              - AttributeName: url
+                KeyType: HASH
+              - AttributeName: scannedAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
+        Tags:
+          - Key: Project
+            Value: accessibility-auditor
+          - Key: Stage
+            Value: ${self:provider.stage}
+
+    # ── SQS Audit Job Queue ──────────────────────────────────────────
+    AuditJobQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-jobs-${self:provider.stage}
+        VisibilityTimeout: 360    # 6 min (> Lambda timeout)
+        MessageRetentionPeriod: 86400  # 24 hours
+        ReceiveMessageWaitTimeSeconds: 5  # Long polling
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt AuditJobDLQ.Arn
+          maxReceiveCount: 3      # Retry 3 times, then move to DLQ
+        Tags:
+          - Key: Project
+            Value: accessibility-auditor
+
+    # ── SQS Dead-Letter Queue ────────────────────────────────────────
+    AuditJobDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-dlq-${self:provider.stage}
+        MessageRetentionPeriod: 1209600  # 14 days for debugging
+        Tags:
+          - Key: Project
+            Value: accessibility-auditor
+
+  # ── Stack Outputs ──────────────────────────────────────────────────
+  Outputs:
+    ApiEndpoint:
+      Description: API Gateway endpoint URL
+      Value: !Sub 'https://${HttpApi}.execute-api.${self:provider.region}.amazonaws.com'
+    AuditQueueUrl:
+      Description: SQS queue URL for audit jobs
+      Value: !Ref AuditJobQueue
+    AuditDLQUrl:
+      Description: Dead-letter queue URL
+      Value: !Ref AuditJobDLQ
+    DynamoDBTable:
+      Description: DynamoDB table name
+      Value: !Ref AuditResultsTable

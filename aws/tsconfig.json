@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": false,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@services/*": ["src/services/*"],
+      "@handlers/*": ["src/handlers/*"],
+      "@analyzer/*": ["src/analyzer/*"],
+      "@scraper/*": ["src/scraper/*"],
+      "@orchestrator/*": ["src/orchestrator/*"]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dashboard",
+    "test"
+  ]
+}
