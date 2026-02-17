@@ -11,7 +11,6 @@ export default function AuditForm({ onAudit, loading, serverStatus, llmEnabled }
   const [url, setUrl] = useState('')
   const [skipLLM, setSkipLLM] = useState(!llmEnabled)
 
-  // Sync skipLLM when health check updates llmEnabled
   useEffect(() => {
     setSkipLLM(!llmEnabled)
   }, [llmEnabled])

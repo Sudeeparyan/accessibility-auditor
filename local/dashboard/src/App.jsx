@@ -1,11 +1,3 @@
-/**
- * App.jsx — Root component of the AccessibilityAI Dashboard
- *
- * Manages app-level state (server status, audit results, loading, history)
- * and renders the full page layout:
- *   Header → AuditForm → Results panels → Audit history
- */
-
 import React, { useState, useEffect, useCallback } from 'react'
 import Header from './components/Header'
 import AuditForm from './components/AuditForm'
@@ -32,7 +24,6 @@ export default function App() {
   const [results, setResults] = useState(null)
   const [auditHistory, setAuditHistory] = useState([])
 
-  // Check server health on mount
   useEffect(() => {
     checkServerHealth()
     const interval = setInterval(checkServerHealth, 30000)
@@ -56,7 +47,6 @@ export default function App() {
     setLoadingStep('Scraping page & running axe-core analysis...')
 
     try {
-      // Simulate step updates for UX
       const stepTimer1 = setTimeout(() => {
         setLoadingStep('Running AI-powered semantic analysis...')
       }, 3000)
@@ -71,7 +61,6 @@ export default function App() {
 
       setResults(data)
 
-      // Add to local history
       setAuditHistory(prev => [{
         id: Date.now().toString(),
         url: data.url,
@@ -90,7 +79,6 @@ export default function App() {
   }, [])
 
   const handleHistoryClick = (item) => {
-    // Re-audit the URL from history
     handleAudit(item.url, false)
   }
 
@@ -124,7 +112,6 @@ export default function App() {
 
         {results && !loading && (
           <>
-            {/* Results Header */}
             <div className="results-header">
               <h2>Audit Results — {results.url}</h2>
               <div className="results-meta">
@@ -133,7 +120,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Row 1: Score + Severity */}
             <div className="results-grid">
               <ScoreGauge
                 score={results.summary.overallScore}
@@ -142,14 +128,12 @@ export default function App() {
               <SeverityBreakdown summary={results.results.summary} />
             </div>
 
-            {/* Row 2: WCAG + Source + Chart */}
             <div className="results-grid-3">
               <WcagCoverage coverage={results.results.wcagCoverage} />
               <SourceBreakdown sources={results.results.summary.sources} />
               <SeverityChart summary={results.results.summary} />
             </div>
 
-            {/* Row 3: Page Metadata */}
             {results.metadata && (
               <div style={{ marginBottom: '1.5rem' }}>
                 <PageMeta
@@ -159,7 +143,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Row 4: Recommendation */}
             <div className="card" style={{ marginBottom: '1.5rem' }}>
               <div className="card-header">
                 <span className="card-title">💡 Recommendation</span>
@@ -169,17 +152,14 @@ export default function App() {
               </div>
             </div>
 
-            {/* Row 5: Screenshot */}
             {results.screenshot && (
               <ScreenshotPreview screenshot={results.screenshot} url={results.url} />
             )}
 
-            {/* Row 6: Violations Table */}
             <ViolationsTable violations={results.results.violations} />
           </>
         )}
 
-        {/* Audit History */}
         {auditHistory.length > 0 && (
           <AuditHistory history={auditHistory} onSelect={handleHistoryClick} />
         )}

@@ -1,39 +1,15 @@
-/**
- * llm-analyzer.js — GPT-4 powered semantic accessibility analysis
- *
- * While axe-core catches *structural* issues (missing alt text, broken ARIA),
- * it CANNOT understand meaning. This module uses GPT-4 to find:
- *   - Unclear link text ("click here", "read more")
- *   - Complex language (above 8th-grade reading level)
- *   - Poor heading structure (skipped levels, misleading headings)
- *   - Ambiguous button labels
- *   - Missing context in form errors/instructions
- *
- * This is what makes the platform a "hybrid" — combining deterministic rules
- * with AI reasoning for ~95% WCAG coverage (vs ~30% with axe-core alone).
- */
-
 const OpenAI = require('openai');
 
 class LLMAnalyzer {
-  /**
-   * @param {string|undefined} apiKey — OpenAI API key. If missing, LLM is disabled.
-   */
   constructor(apiKey) {
     this.enabled = !!apiKey;
     if (this.enabled) {
       this.openai = new OpenAI({ apiKey });
     } else {
-      console.warn('LLMAnalyzer: No API key — semantic analysis disabled.');
+      console.warn('LLMAnalyzer: No API key, semantic analysis disabled.');
     }
   }
 
-  /**
-   * Send page content to GPT-4 for semantic accessibility analysis
-   *
-   * @param {Object} pageData — Scraped page data from puppeteer-scraper
-   * @returns {Object} { violations: [...] } — Array of semantic violations
-   */
   async analyzeContent(pageData) {
     if (!this.enabled) {
       return { violations: [], skipped: true, reason: 'No API key configured' };
@@ -48,21 +24,19 @@ class LLMAnalyzer {
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: this._buildPrompt(pageData) },
         ],
-        temperature: 0.3,        // Low temp for consistent, factual output
+        temperature: 0.3,
         max_tokens: 2000,
         response_format: { type: 'json_object' },
       });
 
       const result = JSON.parse(response.choices[0].message.content);
-      console.log(`GPT-4 found ${result.violations?.length || 0} semantic violations`);
+      console.log(`GPT-4o found ${result.violations?.length || 0} semantic violations`);
       return result;
     } catch (error) {
       console.error('LLM analysis failed:', error.message);
-      return { violations: [], error: error.message }; // Graceful fallback
+      return { violations: [], error: error.message };
     }
   }
-
-  // ─── Private: Build the prompt from scraped data ───────────────────────
 
   _buildPrompt(pageData) {
     const { content } = pageData;
@@ -92,7 +66,7 @@ ${content.images.slice(0, 10).map((img, i) =>
 ${content.forms.map((form, i) => `
 Form ${i + 1}: ${form.action}
 ${form.inputs.map(input => {
-  const label = input.hasLabel ? '✓ has label' : (input.ariaLabel ? `aria-label="${input.ariaLabel}"` : '✗ NO LABEL');
+  const label = input.hasLabel ? 'has label' : (input.ariaLabel ? `aria-label="${input.ariaLabel}"` : 'NO LABEL');
   return `  - ${input.type} (${input.name || input.id || 'unnamed'}) ${label}`;
 }).join('\n')}`).join('\n')}
 
@@ -109,7 +83,6 @@ Find accessibility violations that axe-core cannot detect.`.trim();
   }
 }
 
-// ─── System prompt for GPT-4 ─────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are an expert WCAG 2.1 accessibility auditor. Analyze web content for accessibility issues that automated tools cannot detect.
 
 Focus on semantic and contextual violations:

@@ -1,24 +1,4 @@
-/**
- * combiner.js — Merges axe-core + LLM results into a single compliance report
- *
- * This module:
- *   1. Normalizes violations from both sources into a unified format
- *   2. Calculates WCAG 2.1 coverage (Level A / AA / AAA)
- *   3. Computes an overall compliance score (0–100)
- *   4. Sorts violations by severity (critical → minor)
- *
- * Scoring formula:
- *   Start at 100, deduct: critical(-10), serious(-5), moderate(-2), minor(-1)
- */
-
 class ResultCombiner {
-  /**
-   * Merge axe-core and LLM violations into one unified report
-   *
-   * @param {Object} axeResults  — Raw output from axe-core (via puppeteer-scraper)
-   * @param {Object} llmResults  — Output from GPT-4 (via llm-analyzer)
-   * @returns {Object} Combined report with violations, summary, wcagCoverage, complianceScore
-   */
   combineResults(axeResults, llmResults) {
     const combined = {
       summary: {
@@ -31,7 +11,6 @@ class ResultCombiner {
       complianceScore: 0,
     };
 
-    // ── Process axe-core violations (rule-based) ─────────────────────
     if (axeResults?.violations) {
       for (const v of axeResults.violations) {
         combined.violations.push({
@@ -58,7 +37,6 @@ class ResultCombiner {
       }
     }
 
-    // ── Process LLM violations (semantic/contextual) ─────────────────
     if (llmResults?.violations) {
       for (const v of llmResults.violations) {
         const severity = v.severity.toLowerCase();
@@ -83,25 +61,18 @@ class ResultCombiner {
       }
     }
 
-    // ── Calculate coverage & score ───────────────────────────────────
     combined.wcagCoverage = this._calculateWCAGCoverage(combined.violations);
     combined.complianceScore = this._calculateScore(combined.summary);
 
-    // Sort: critical first, minor last
     const order = { critical: 0, serious: 1, moderate: 2, minor: 3 };
     combined.violations.sort((a, b) => order[a.impact] - order[b.impact]);
 
     return combined;
   }
 
-  /**
-   * Generate a human-readable summary from combined results
-   * @returns {{ overallScore, complianceLevel, totalIssues, criticalIssues, recommendation }}
-   */
   generateSummary(combinedResults) {
     const { summary, complianceScore, wcagCoverage } = combinedResults;
 
-    // Determine highest WCAG conformance level achieved
     let level = 'Not Compliant';
     if (wcagCoverage.AAA >= 90) level = 'AAA';
     else if (wcagCoverage.AA >= 90) level = 'AA';
@@ -116,9 +87,6 @@ class ResultCombiner {
     };
   }
 
-  // ─── Private helpers ──────────────────────────────────────────────────────
-
-  /** Map LLM violation types → WCAG guideline numbers */
   _inferWCAGTags(violationType) {
     const mapping = {
       'unclear-link-text':      ['wcag244', 'wcag249'],
@@ -134,9 +102,7 @@ class ResultCombiner {
     return mapping[violationType] || [];
   }
 
-  /** Calculate WCAG compliance percentage for each level (A, AA, AAA) */
   _calculateWCAGCoverage(violations) {
-    // Full list of WCAG 2.1 success criteria by level
     const guidelines = {
       A: ['1.1.1','1.2.1','1.2.2','1.2.3','1.3.1','1.3.2','1.3.3','1.4.1','1.4.2',
           '2.1.1','2.1.2','2.1.4','2.2.1','2.2.2','2.3.1','2.4.1','2.4.2','2.4.3',
@@ -150,7 +116,6 @@ class ResultCombiner {
             '2.5.5','2.5.6','3.1.3','3.1.4','3.1.5','3.1.6','3.2.5','3.3.5','3.3.6'],
     };
 
-    // Collect all violated WCAG criteria (e.g. "wcag244" → "2.4.4")
     const violated = new Set();
     for (const v of violations) {
       for (const tag of (v.wcagTags || [])) {
@@ -159,7 +124,6 @@ class ResultCombiner {
       }
     }
 
-    // compliance % = (total − violated) / total * 100
     const coverage = {};
     for (const [level, criteria] of Object.entries(guidelines)) {
       const fails = criteria.filter(c => violated.has(c)).length;
@@ -168,10 +132,6 @@ class ResultCombiner {
     return coverage;
   }
 
-  /**
-   * Calculate overall compliance score (0–100)
-   * Weighted deductions: critical=-10, serious=-5, moderate=-2, minor=-1
-   */
   _calculateScore(summary) {
     const weights = { critical: -10, serious: -5, moderate: -2, minor: -1 };
     let score = 100;
@@ -181,12 +141,11 @@ class ResultCombiner {
     return Math.max(0, Math.min(100, score));
   }
 
-  /** Get a human-readable recommendation based on score */
   _getRecommendation(score) {
-    if (score >= 90) return 'Excellent! Strong accessibility compliance. Focus on remaining minor issues.';
+    if (score >= 90) return 'Excellent accessibility compliance. Focus on remaining minor issues.';
     if (score >= 70) return 'Good progress. Prioritize fixing critical and serious violations.';
-    if (score >= 50) return 'Moderate accessibility. Significant work needed — start with critical violations.';
-    return 'Poor accessibility. Immediate action required — likely violates ADA/Section 508.';
+    if (score >= 50) return 'Moderate accessibility. Significant work needed, start with critical violations.';
+    return 'Poor accessibility. Immediate action required, likely violates ADA/Section 508.';
   }
 }
 

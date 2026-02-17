@@ -1,13 +1,5 @@
-/**
- * api.js — HTTP client for communicating with the Express backend
- *
- * All API calls go through Vite's dev proxy (see vite.config.js),
- * so we use relative URLs. In production, set API_BASE to the server URL.
- */
-
 const API_BASE = '';
 
-/** Check if the backend server is running and get its status */
 export async function checkHealth() {
   try {
     const res = await fetch(`${API_BASE}/health`);
