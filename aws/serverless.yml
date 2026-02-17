@@ -211,11 +211,54 @@ resources:
           - Key: Project
             Value: accessibility-auditor
 
+    # ── S3 Bucket for Dashboard Static Website ───────────────────────
+    DashboardBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-dashboard-${self:provider.stage}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ['*']
+              AllowedMethods: [GET]
+              AllowedOrigins: ['*']
+              MaxAge: 3600
+        Tags:
+          - Key: Project
+            Value: accessibility-auditor
+          - Key: Stage
+            Value: ${self:provider.stage}
+
+    DashboardBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref DashboardBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: '*'
+              Action: s3:GetObject
+              Resource: !Sub '${DashboardBucket.Arn}/*'
+
   # ── Stack Outputs ──────────────────────────────────────────────────
   Outputs:
     ApiEndpoint:
       Description: API Gateway endpoint URL
       Value: !Sub 'https://${HttpApi}.execute-api.${self:provider.region}.amazonaws.com'
+    DashboardUrl:
+      Description: Dashboard website URL
+      Value: !Sub 'http://${DashboardBucket}.s3-website-${self:provider.region}.amazonaws.com'
+    DashboardBucketName:
+      Description: S3 bucket name for dashboard
+      Value: !Ref DashboardBucket
     AuditQueueUrl:
       Description: SQS queue URL for audit jobs
       Value: !Ref AuditJobQueue

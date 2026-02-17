@@ -1,0 +1,24 @@
+{
+  "name": "accessibility-auditor-aws-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "VITE_API_URL=https://ehegcj7kv9.execute-api.us-east-1.amazonaws.com vite build",
+    "build:win": "set VITE_API_URL=https://ehegcj7kv9.execute-api.us-east-1.amazonaws.com&& vite build",
+    "preview": "vite preview",
+    "deploy": "aws s3 sync dist/ s3://accessibility-auditor-dashboard-dev --delete",
+    "deploy:full": "npm run build:win && npm run deploy"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.4",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "lucide-react": "^0.564.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "recharts": "^3.7.0"
+  }
+}

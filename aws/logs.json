@@ -1,0 +1,75 @@
+﻿{
+    "events": [
+        {
+            "timestamp": 1771336302401,
+            "message": "INIT_START Runtime Version: nodejs:18.v100\tRuntime Version ARN: arn:aws:lambda:us-east-1::runtime:9a9659568bf79d197303268f6f12daf1b07196863769ffdfec56057ebf0b0553\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336302882,
+            "message": "2026-02-17T13:51:42.882Z\tundefined\tINFO\taxe-core loaded via fallback: /var/task/node_modules/axe-core/axe.min.js (548KB)\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336302925,
+            "message": "START RequestId: 130cefd4-43df-5114-b5cf-8dda3742553a Version: $LATEST\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336302926,
+            "message": "2026-02-17T13:51:42.926Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\t[AuditConsumer] Processing 1 message(s)\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336302927,
+            "message": "2026-02-17T13:51:42.927Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tWARN\tLLMAnalyzer: No API key � semantic analysis disabled.\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336302927,
+            "message": "2026-02-17T13:51:42.927Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\tInitializing job manager...\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336302927,
+            "message": "2026-02-17T13:51:42.927Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\tLaunching headless browser...\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336304869,
+            "message": "2026-02-17T13:51:44.869Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\tLambda mode: using Chromium at /tmp/chromium\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336304953,
+            "message": "2026-02-17T13:51:44.953Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\tBrowser ready\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336304953,
+            "message": "2026-02-17T13:51:44.953Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\tJob manager ready\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336304954,
+            "message": "2026-02-17T13:51:44.954Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\t[AuditConsumer] Processing job audit-1771336301005-s6801p: https://example.com\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336304954,
+            "message": "2026-02-17T13:51:44.954Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\t\n============================================================\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336304954,
+            "message": "2026-02-17T13:51:44.954Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\tAuditing: https://example.com\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336304954,
+            "message": "2026-02-17T13:51:44.954Z\t130cefd4-43df-5114-b5cf-8dda3742553a\tINFO\t============================================================\n\n",
+            "ingestionTime": 1771336311457
+        },
+        {
+            "timestamp": 1771336304954,
+            "message": 

@@ -187,7 +187,12 @@ export async function handler(
         });
       }
 
-      return respond(200, { success: true, ...report });
+      // Determine status based on the record contents
+      const isPending = !report.results || Object.keys(report.results).length === 0
+        || report.complianceLevel === 'pending';
+      const status = isPending ? 'PENDING' : 'COMPLETED';
+
+      return respond(200, { success: true, status, ...report });
     }
 
     // GET /api/queue/stats — SQS queue statistics
